@@ -1,14 +1,25 @@
 <?php
-require_once '../includes/config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../gemini.php';  // Inclure la classe Gemini API
 
 // Protection de la page
+if (!function_exists('isLoggedIn')) {
+    die("Erreur: La fonction isLoggedIn() n'est pas définie. Vérifiez l'inclusion de functions.php.");
+}
+
 if (!isLoggedIn()) {
     redirect('../login.php');
 }
 
 $userId = $_SESSION['user_id'];
 $userName = $_SESSION['user_name'];
+
+// Clé API Gemini (en production, utilisez des variables d'environnement)
+$apiKey = 'AIzaSyBBGnDYnsrrX5RwKCagz5d_rMg8Gesz6xA';
+
+// Initialiser l'instance Gemini
+$gemini = new GeminiAI($apiKey);
 
 $errors = [];
 $success = '';
@@ -62,24 +73,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message']) && $conver
         $result = saveAiMessage($conversationId, $userMessage, true);
         
         if ($result['success']) {
-            // Simuler une réponse de l'IA
-            // En production, vous intégreriez ici l'appel à une API comme OpenAI
-            $aiResponses = [
-                "Je comprends ce que vous ressentez. Pouvez-vous m'en dire plus sur cette situation ?",
-                "C'est une préoccupation que beaucoup de personnes partagent. Comment vous sentez-vous par rapport à cela ?",
-                "Merci de partager cela avec moi. Avez-vous essayé de prendre un moment pour vous aujourd'hui ?",
-                "Je suis là pour vous écouter. Qu'est-ce qui vous aiderait à vous sentir mieux en ce moment ?",
-                "Parfois, prendre une pause et respirer profondément peut aider. Voulez-vous essayer un exercice de respiration ensemble ?",
-                "Votre bien-être est important. Avez-vous parlé de ces sentiments avec quelqu'un de proche ?",
-                "C'est normal de se sentir ainsi parfois. Pourriez-vous me dire ce qui a fonctionné pour vous dans le passé ?",
-                "Il est courageux de parler de ces choses. Comment puis-je vous soutenir aujourd'hui ?"
+            // Préparer les messages pour l'API Gemini
+            $geminiMessages = [];
+            
+            // Ajouter un contexte à l'IA pour qu'elle agisse comme un assistant de bien-être mental
+            $systemPrompt = [
+                'role' => 'model',
+                'content' => "Vous êtes un assistant de bien-être mental bienveillant et empathique. Votre objectif est d'aider l'utilisateur à améliorer son bien-être mental et émotionnel. Vous devez être compréhensif, offrir des conseils constructifs et des techniques pratiques pour gérer le stress, l'anxiété et améliorer la santé mentale. Vos réponses doivent être empathiques et encourageantes. Évitez les conseils médicaux spécifiques et suggérez de consulter un professionnel de la santé pour les problèmes graves. Répondez en français."
             ];
             
-            $aiResponse = $aiResponses[array_rand($aiResponses)];
-            saveAiMessage($conversationId, $aiResponse, false);
+            $geminiMessages[] = $systemPrompt;
             
-            // Rafraîchir les messages
-            $messages = getConversationMessages($conversationId);
+            // Ajouter les messages précédents (limités aux 10 derniers pour éviter de dépasser les limites de l'API)
+            $recentMessages = array_slice($messages, -10);
+            foreach ($recentMessages as $msg) {
+                $geminiMessages[] = [
+                    'role' => $msg['is_user'] ? 'user' : 'model',
+                    'content' => $msg['message']
+                ];
+            }
+            
+            // Ajouter le message actuel de l'utilisateur
+            $geminiMessages[] = [
+                'role' => 'user',
+                'content' => $userMessage
+            ];
+            
+            try {
+                // Générer une réponse avec l'API Gemini
+                $options = [
+                    'temperature' => 0.7,
+                    'maxOutputTokens' => 800
+                ];
+                
+                $response = $gemini->generateChatContent($geminiMessages, $options);
+                
+                if (isset($response['error'])) {
+                    throw new Exception("Erreur de l'API Gemini: " . ($response['message'] ?? "Erreur inconnue"));
+                }
+                
+                // Extraire la réponse générée
+                $aiResponse = $gemini->getTextFromResponse($response);
+                
+                // Si pas de réponse valide, utiliser une réponse de secours
+                if (!$aiResponse) {
+                    $backupResponses = [
+                        "Je comprends ce que vous ressentez. Pouvez-vous m'en dire plus sur cette situation ?",
+                        "C'est une préoccupation que beaucoup de personnes partagent. Comment vous sentez-vous par rapport à cela ?",
+                        "Merci de partager cela avec moi. Avez-vous essayé de prendre un moment pour vous aujourd'hui ?",
+                        "Je suis là pour vous écouter. Qu'est-ce qui vous aiderait à vous sentir mieux en ce moment ?",
+                        "Parfois, prendre une pause et respirer profondément peut aider. Voulez-vous essayer un exercice de respiration ensemble ?"
+                    ];
+                    $aiResponse = $backupResponses[array_rand($backupResponses)];
+                }
+                
+                // Sauvegarder la réponse de l'IA
+                saveAiMessage($conversationId, $aiResponse, false);
+                
+                // Rafraîchir les messages
+                $messages = getConversationMessages($conversationId);
+                
+            } catch (Exception $e) {
+                $errors[] = "Erreur: " . $e->getMessage();
+                
+                // En cas d'erreur, utiliser une réponse de secours
+                $backupResponse = "Je suis désolé, j'ai rencontré un problème technique. Pouvez-vous reformuler votre message ou essayer à nouveau plus tard ?";
+                saveAiMessage($conversationId, $backupResponse, false);
+                
+                // Rafraîchir les messages
+                $messages = getConversationMessages($conversationId);
+            }
         } else {
             $errors[] = $result['message'];
         }
@@ -140,7 +203,7 @@ $conversations = getUserConversations($userId);
         
         <div class="content">
             <div class="page-header">
-                <h1>Consultation IA</h1>
+                <h1>Consultation IA avec Google Gemini</h1>
             </div>
             
             <?php if (!empty($errors)): ?>
@@ -175,7 +238,7 @@ $conversations = getUserConversations($userId);
                         <h2>À propos de cette consultation</h2>
                     </div>
                     <div class="card-body">
-                        <p>Cette consultation IA est conçue pour vous offrir un espace de dialogue et de réflexion sur votre bien-être mental.</p>
+                        <p>Cette consultation IA est propulsée par Google Gemini et est conçue pour vous offrir un espace de dialogue et de réflexion sur votre bien-être mental.</p>
                         <p>Bien que notre assistant soit programmé pour vous fournir un soutien et des conseils, veuillez noter qu'il ne remplace pas une consultation avec un professionnel de la santé mentale.</p>
                         <p>Si vous vivez une situation d'urgence ou de détresse grave, veuillez contacter un service d'aide professionnelle ou consulter un médecin.</p>
                     </div>

@@ -1,0 +1,27 @@
+{
+  "name": "webjs",
+  "version": "1.0.0",
+  "description": "Une application web complète pour le bien-être mental offrant consultation IA, bibliothèque numérique et bloc-notes personnel.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rayen43500/webjs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/rayen43500/webjs/issues"
+  },
+  "homepage": "https://github.com/rayen43500/webjs#readme",
+  "dependencies": {
+    "@azure-rest/ai-inference": "latest",
+    "@azure/core-auth": "latest",
+    "@azure/core-sse": "latest",
+    "dotenv": "latest"
+  }
+}
