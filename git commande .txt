@@ -1,0 +1,9 @@
+pour metre a jour le traville 
+
+    git pull origin main 
+
+
+    pour faire un push 
+            git add .
+            git commit -m "ecrire ce que tu modifier entre de cotte "
+            git push origin -u main
