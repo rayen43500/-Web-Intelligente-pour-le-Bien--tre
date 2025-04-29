@@ -30,12 +30,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result['success']) {
             // Redirection en fonction du rôle (admin ou utilisateur)
             if ($_SESSION['is_admin']) {
+                // Pour l'administrateur
                 redirect('admin/index.php');
             } else {
+                // Pour l'utilisateur normal
                 redirect('client/dashboard.php');
             }
         } else {
             $errors[] = $result['message'];
+            
+            // Débogage - Uniquement pour développement 
+            if (DISPLAY_ERRORS) {
+                $errors[] = "Débogage: Vérifiez les logs PHP pour plus d'informations.";
+            }
         }
     }
 }

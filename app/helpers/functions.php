@@ -55,12 +55,13 @@ function loginUser($email, $password) {
     
     $user = $stmt->fetch();
     
+    // Vérifier le mot de passe
     if (password_verify($password, $user['password'])) {
         // Créer la session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['user_email'] = $user['email'];
-        $_SESSION['is_admin'] = $user['is_admin'];
+        $_SESSION['is_admin'] = (bool)$user['is_admin'];
         
         return [
             'success' => true,
@@ -68,6 +69,10 @@ function loginUser($email, $password) {
             'user' => $user
         ];
     } else {
+        // Pour le débogage, ajoutons des informations supplémentaires
+        error_log("Échec de connexion pour $email - Mot de passe incorrect");
+        error_log("Hash stocké: " . $user['password']);
+        
         return [
             'success' => false,
             'message' => "Email ou mot de passe incorrect."
@@ -87,4 +92,65 @@ function logoutUser() {
         'success' => true,
         'message' => "Déconnexion réussie."
     ];
+}
+
+// Fonction pour vérifier si l'utilisateur est admin
+if (!function_exists('isAdmin')) {
+    function isAdmin() {
+        return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+    }
+}
+
+// Fonction pour récupérer des statistiques pour le tableau de bord admin
+function getAdminStats() {
+    global $pdo;
+    
+    $stats = [];
+    
+    // Nombre total d'utilisateurs
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM users WHERE is_admin = 0");
+    $stmt->execute();
+    $stats['total_users'] = $stmt->fetch()['total'];
+    
+    // Nombre total de livres
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM books");
+    $stmt->execute();
+    $stats['total_books'] = $stmt->fetch()['total'];
+    
+    // Nombre total de musiques
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM music");
+    $stmt->execute();
+    $stats['total_music'] = $stmt->fetch()['total'];
+    
+    // Nombre total de vidéos
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM videos");
+    $stmt->execute();
+    $stats['total_videos'] = $stmt->fetch()['total'];
+    
+    // Nombre total de conversations IA
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM ai_conversations");
+    $stmt->execute();
+    $stats['total_conversations'] = $stmt->fetch()['total'];
+    
+    return $stats;
+}
+
+// Fonctions pour récupérer tous les livres
+function getAllBooks() {
+    global $pdo;
+    
+    $stmt = $pdo->prepare("SELECT * FROM books ORDER BY added_at DESC");
+    $stmt->execute();
+    
+    return $stmt->fetchAll();
+}
+
+// Fonctions pour récupérer tous les morceaux de musique
+function getAllMusic() {
+    global $pdo;
+    
+    $stmt = $pdo->prepare("SELECT * FROM music ORDER BY added_at DESC");
+    $stmt->execute();
+    
+    return $stmt->fetchAll();
 } 

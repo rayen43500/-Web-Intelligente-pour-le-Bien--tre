@@ -1,10 +1,9 @@
 <?php
-require_once '../includes/config.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../app/bootstrap.php';
 
 // Protection de la page
 if (!isLoggedIn() || !isAdmin()) {
-    redirect('../login.php');
+    redirect('login.php');
 }
 
 // Récupérer les statistiques pour le tableau de bord
