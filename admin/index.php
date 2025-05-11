@@ -8,6 +8,19 @@ if (!isLoggedIn() || !isAdmin()) {
 
 // Récupérer les statistiques pour le tableau de bord
 $stats = getAdminStats();
+
+function pourcentage($value, $total) {
+    if ($total == 0) return 0;
+    return round(($value / $total) * 100, 2);
+}
+$total_users = $stats['total_users'];
+$total_books = $stats['total_books'];
+$total_music = $stats['total_music'];
+$total_videos = $stats['total_videos'];
+$total_conversations = $stats['total_conversations'];
+
+$total_global = $total_users + $total_books + $total_music + $total_videos + $total_conversations;
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -16,58 +29,100 @@ $stats = getAdminStats();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration - Plateforme de Bien-être Mental et Culturel</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="dashboard">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h2>Administration</h2>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="index.php" class="active">Tableau de bord</a></li>
-                    <li><a href="books.php">Gestion des livres</a></li>
-                    <li><a href="music.php">Gestion des musiques</a></li>
-                    <li><a href="videos.php">Gestion des vidéos</a></li>
-                    <li><a href="users.php">Gestion des utilisateurs</a></li>
-                    <li><a href="../logout.php">Déconnexion</a></li>
-                </ul>
+       <!-- Sidebar modernisée -->
+        <aside class="w-64 bg-blue-500 shadow-md text-white min-h-screen">
+            <div class="p-6 border-b border-blue-400">
+                <h2 class="text-2xl font-bold">Administration</h2>
+            </div><br>
+            <nav class="p-4 space-y-2">
+                <a href="index.php" class="block py-2 px-4 rounded hover:bg-blue-600 text-white">
+                    <b><i class="fas fa-home mr-2 text-white"></i> Tableau de bord</b>
+                </a></br>
+                <a href="books.php" class="block py-2 px-4 rounded hover:bg-blue-600 text-white">
+                    <b><i class="fas fa-book mr-2 text-white"></i> Gestion des livres</b>
+                </a><br>
+                <a href="music.php" class="block py-2 px-4 rounded hover:bg-blue-600 text-white">
+                    <b><i class="fas fa-music mr-2 text-white"></i> Gestion des musiques</b>
+                </a><br>
+                <a href="videos.php" class="block py-2 px-4 rounded hover:bg-blue-600 text-white">
+                    <b><i class="fas fa-video mr-2 text-white"></i> Gestion des vidéos</b>
+                </a><br>
+                <a href="users.php" class="block py-2 px-4 rounded hover:bg-blue-600 text-white">
+                    <b><i class="fas fa-users mr-2 text-white"></i> Gestion utilisateurs<b>
+                </a><br>
+                <a href="../logout.php" class="block py-2 px-4 rounded text-red-600 hover:bg-red-100 text-white">
+                    <b> <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion</b>
+                </a>
             </nav>
-        </div>
+        </aside>
+
         
         <div class="content">
             <div class="page-header">
-                <h1>Tableau de bord administrateur</h1>
+                <h1 style="font-size: larger;color:brown"> Tableau de bord administrateur</h1>
             </div>
             
             <!-- Statistiques générales -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Utilisateurs</h3>
-                    <div class="stat-value"><?php echo $stats['total_users']; ?></div>
+            <div class="feature-grid ">
+                <div class="feature-card" >
+                <h3><i class="fas fa-user"> Utilisateurs </i></h3>
+                <div class="stat-value"><?php echo $total_users; ?> utilisateurs</div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: <?php echo pourcentage($total_users, $total_global); ?>%;"></div>
                 </div>
-                
-                <div class="stat-card">
-                    <h3>Livres</h3>
-                    <div class="stat-value"><?php echo $stats['total_books']; ?></div>
+                <img src="../assets/img/stat.PNG" alt="pourcentage" style="width: 30px; height: 30px;" />
+                <div class="percentage"><?php echo pourcentage($total_users, $total_global); ?>%</div>
                 </div>
-                
-                <div class="stat-card">
-                    <h3>Musiques</h3>
-                    <div class="stat-value"><?php echo $stats['total_music']; ?></div>
+
+                <div class="feature-card">
+                <h3><i class="fas fa-music"> Musiques  </i></h3>
+                <div class="stat-value"><?php echo $total_music; ?> Musiques</div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: <?php echo pourcentage($total_music, $total_global); ?>%;"></div>
                 </div>
-                
-                <div class="stat-card">
-                    <h3>Vidéos</h3>
-                    <div class="stat-value"><?php echo $stats['total_videos']; ?></div>
+                <div >
+                <img src="../assets/img/stat.PNG" alt="pourcentage" style="width: 30px; height: 30px;" />
+                <div class="percentage"><?php echo pourcentage($total_music, $total_global); ?>%</div>
                 </div>
-                
-                <div class="stat-card">
-                    <h3>Conversations IA</h3>
-                    <div class="stat-value"><?php echo $stats['total_conversations']; ?></div>
                 </div>
+
+                <div class="feature-card">
+                <h3><i class="fas fa-book"> Livres </i></h3>
+                <div class="stat-value"><?php echo $total_books; ?> livres</div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: <?php echo pourcentage($total_books, $total_global); ?>%;"></div>
+                </div>
+                <img src="../assets/img/stat.PNG" alt="pourcentage" style="width: 30px; height: 30px;" />
+                <div class="percentage"><?php echo pourcentage($total_books, $total_global); ?>%</div>
+                </div>
+
+               <div class="feature-card">
+                <h3><i class="fas fa-video"> Vedeo </i></h3>
+                <div class="stat-value"><?php echo $total_videos; ?> Vedeo</div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: <?php echo pourcentage($total_videos, $total_global); ?>%;"></div>
+                </div>
+                <img src="../assets/img/stat.PNG" alt="pourcentage" style="width: 30px; height: 30px;" />
+                <div class="percentage"><?php echo pourcentage($total_videos, $total_global); ?>%</div>
+                </div>
+
+                <div class="feature-card">
+                <h3><i class="fas fa-comments"> Conversations IA </i></h3>
+                <div class="stat-value"><?php echo $total_conversations; ?> conversations</div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: <?php echo pourcentage($total_conversations, $total_global); ?>%;"></div>
+                </div>
+                <img src="../assets/img/stat.PNG" alt="pourcentage" style="width: 30px; height: 30px;" />
+                <div class="percentage"><?php echo pourcentage($total_conversations, $total_global); ?>%</div>
+                </div>
+
             </div>
-            
+                    
             <!-- Gestion rapide -->
             <div class="row">
                 <div class="card">
@@ -174,7 +229,7 @@ $stats = getAdminStats();
                     </div>
                 </div>
             </div>
-        </div>
+
     </div>
     
     <script src="../assets/js/main.js"></script>
